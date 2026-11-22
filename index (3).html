@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ديوانية الألعاب الصوتية الشاملة</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        :root { --bg: #0f172a; --card: #1e293b; --primary: #3b82f6; --accent: #10b981; --danger: #ef4444; --warn: #f59e0b; --purple: #8b5cf6; --text: #f8fafc; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 12px; text-align: center; }
+        .container { max-width: 520px; margin: auto; background: var(--card); padding: 18px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
+        h1, h2, h3, h4 { margin-top: 0; }
+        input, select { width: 88%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #334155; background: #0f172a; color: white; font-size: 16px; text-align: center; }
+        button { padding: 12px 16px; margin: 5px; border-radius: 10px; border: none; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.2s; color: white; }
+        button:active { transform: scale(0.96); }
+        .btn-primary { background: var(--primary); width: 90%; }
+        .btn-accent { background: var(--accent); width: 90%; }
+        .btn-danger { background: var(--danger); width: 90%; }
+        .btn-warn { background: var(--warn); color: #000; width: 90%; }
+        .btn-purple { background: var(--purple); width: 90%; }
+        .btn-mic { background: #475569; width: 90%; margin-top: 6px; }
+        .mic-on { background: var(--accent) !important; }
+        .hidden { display: none; }
+        .player-list { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 10px 0; }
+        .player-badge { background: #334155; padding: 5px 11px; border-radius: 20px; font-size: 13px; }
+        .player-badge.dead { background: #7f1d1d; text-decoration: line-through; opacity: 0.7; }
+        .secret-card { background: linear-gradient(135deg, #1e3a8a, #3b82f6); padding: 18px; border-radius: 14px; margin: 12px 0; border: 2px dashed #93c5fd; }
+        .mafia-card { background: linear-gradient(135deg, #4c1d95, #7c3aed); padding: 18px; border-radius: 14px; margin: 12px 0; border: 2px dashed #c4b5fd; }
+        .question-box { background: #0f172a; padding: 12px; border-radius: 10px; margin: 10px 0; color: #fbbf24; font-size: 16px; }
+        .vote-btn { display: block; width: 90%; margin: 8px auto; background: #334155; }
+        .vote-btn:hover { background: var(--primary); }
+        
+        /* تنسيق المؤثرات الصوتية العراقية */
+        .sfx-bar { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; margin: 10px 0; background: #0f172a; padding: 8px; border-radius: 12px; border: 1px solid #334155; }
+        .sfx-btn { background: #334155; font-size: 12px; padding: 7px 10px; margin: 2px; border-radius: 8px; color: #fde047; }
+        .sfx-btn:hover { background: #475569; }
+
+        /* تنسيق الشات الكتابي */
+        .chat-section { background: #0f172a; border-radius: 12px; padding: 10px; margin-top: 15px; border: 1px solid #334155; text-align: right; }
+        .chat-messages { height: 130px; overflow-y: auto; padding: 6px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+        .chat-msg { background: #1e293b; padding: 6px 10px; border-radius: 8px; word-wrap: break-word; }
+        .chat-msg.sfx-alert { background: #312e81; color: #fde047; text-align: center; font-weight: bold; }
+        .chat-input-row { display: flex; gap: 6px; margin-top: 8px; }
+        .chat-input-row input { width: 75%; margin: 0; padding: 9px; font-size: 14px; text-align: right; }
+        .chat-input-row button { width: 25%; margin: 0; padding: 9px; background: var(--primary); }
+
+        /* تنسيق أوراق لعبة المحافظات */
+        .cards-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 12px 0; }
+        .gov-card { background: linear-gradient(145deg, #f8fafc, #e2e8f0); color: #0f172a; padding: 18px 8px; border-radius: 12px; font-size: 17px; font-weight: bold; border: 3px solid #94a3b8; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .gov-card.selected { border-color: var(--warn); background: #fef08a; }
+
+        /* تنسيق حجرة ورقة مقص */
+        .rps-grid { display: flex; justify-content: center; gap: 10px; margin: 15px 0; }
+        .rps-btn { font-size: 32px; padding: 15px 20px; background: #334155; border-radius: 14px; width: 30%; }
+        .rps-btn.chosen { background: var(--accent); border: 2px solid white; }
+
+        /* تنسيق لعبة لودو */
+        .ludo-board { background: #0f172a; padding: 12px; border-radius: 14px; margin: 10px 0; border: 2px solid #334155; }
+        .ludo-track { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin: 10px 0; }
+        .ludo-cell { background: #1e293b; border: 1px solid #475569; border-radius: 6px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 11px; position: relative; flex-wrap: wrap; }
+        .ludo-cell.safe { background: #334155; border-color: #fbbf24; }
+        .ludo-cell.finish { background: linear-gradient(135deg, #f59e0b, #ef4444); color: white; font-weight: bold; }
+        .token { width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; display: inline-block; margin: 1px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.6); }
+        .t-red { background: #ef4444; }
+        .t-blue { background: #3b82f6; }
+        .t-green { background: #10b981; }
+        .t-yellow { background: #f59e0b; }
+        .dice-box { font-size: 38px; background: #1e293b; width: 70px; height: 70px; line-height: 70px; margin: 10px auto; border-radius: 14px; border: 2px solid #38bdf8; }
+        .ludo-player-card { display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 8px 12px; border-radius: 8px; margin: 5px 0; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- شاشة البداية -->
+    <div id="screen-login">
+        <h1>🎮 ديوانية الألعاب</h1>
+        <p style="color: #94a3b8;">العب، راسل، وسولف بالمايك ويه أصدقائك أونلاين</p>
+        <input type="text" id="player-name" placeholder="اكتب اسمك هنا...">
+        <button class="btn-primary" onclick="createRoom()">إنشاء غرفة جديدة</button>
+        <hr style="border-color: #334155; margin: 15px 0;">
+        <input type="number" id="room-code-input" placeholder="أدخل كود الغرفة (مثلاً: 1234)">
+        <button class="btn-accent" onclick="joinRoom()">دخول الغرفة</button>
+    </div>
+
+    <!-- شاشة الغرفة واللعب -->
+    <div id="screen-room" class="hidden">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span>كود الغرفة: <strong id="display-room-code" style="color: #38bdf8; font-size: 20px;"></strong></span>
+            <span id="host-badge" class="hidden" style="background: #f59e0b; color: black; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: bold;">أنت المدير</span>
+        </div>
+
+        <!-- زر المايك الجماعي -->
+        <button id="mic-btn" class="btn-mic mic-on" onclick="toggleMic()">🎤 المايك مفتوح للكل</button>
+        <div id="audio-elements"></div>
+
+        <!-- شريط المؤثرات الصوتية العراقية -->
+        <div class="sfx-bar">
+            <button class="sfx-btn" onclick="triggerIraqiSFX('hala', 'هلا والله بالربع! 👋')">👋 هلا والله</button>
+            <button class="sfx-btn" onclick="triggerIraqiSFX('kafu', 'كفووو والله! 🔥')">🔥 كفو</button>
+            <button class="sfx-btn" onclick="triggerIraqiSFX('yalla', 'يلا بسرعة استعجل! ⏳')">⏳ يلا بسرعة</button>
+            <button class="sfx-btn" onclick="triggerIraqiSFX('saduh', 'صادوووه! 😂')">😂 صادوه</button>
+            <button class="sfx-btn" onclick="triggerIraqiSFX('akh', 'آخ يا القهر! 🤦‍♂️')">🤦‍♂️ آخ يا القهر</button>
+            <button class="sfx-btn" onclick="triggerIraqiSFX('clap', 'تصفيق حار! 👏')">👏 تصفيق</button>
+        </div>
+
+        <!-- قائمة اللاعبين -->
+        <h4 style="margin-top: 8px;">اللاعبون المتواجدون (<span id="player-count">0</span>):</h4>
+        <div id="players-container" class="player-list"></div>
+
+        <hr style="border-color: #334155;">
+
+        <!-- لوحة تحكم المدير (الهوست) -->
+        <div id="host-controls" class="hidden">
+            <h3>اختر اللعبة:</h3>
+            <select id="game-mode">
+                <option value="ludo">🎲 لعبة لودو (Ludo) أونلاين</option>
+                <option value="mafia">🔪 لعبة المافيا ومن القاتل</option>
+                <option value="governorates">🇮🇶 لعبة المحافظات (تجميع 4 أوراق)</option>
+                <option value="coffee">☕ لعبة القهوة والشاي (واحد مختلف)</option>
+                <option value="spy">🕵️ لعبة الجاسوس (برا السالفة)</option>
+                <option value="rps">✊✋✌️ حجرة ورقة مقص (تحدي جماعي)</option>
+            </select>
+            <button class="btn-accent" onclick="startGame()">🚀 ابدأ الجولة</button>
+        </div>
+
+        <!-- 1. منطقة ألعاب الكلمات (قهوة وشاي / جاسوس) -->
+        <div id="word-game-area" class="hidden">
+            <div class="secret-card">
+                <div style="font-size: 14px; color: #cbd5e1;">كلمتك السرية هي:</div>
+                <h2 id="my-secret-word" style="font-size: 26px; margin: 10px 0; color: #fde047;">---</h2>
+                <div id="my-role-hint" style="font-size: 13px; color: #e2e8f0;"></div>
+            </div>
+            <div class="question-box" id="suggested-question">💡 اسألوا بعض بالمايك: شلون تحب تشربها؟</div>
+            <button id="next-q-btn" class="btn-primary hidden" onclick="nextQuestion()">🔄 سؤال مقترح آخر</button>
+            <button id="start-vote-btn" class="btn-danger hidden" onclick="triggerVoting()">🗳️ بدء التصويت</button>
+        </div>
+
+        <!-- 2. منطقة لعبة المحافظات (4 أوراق) -->
+        <div id="gov-game-area" class="hidden">
+            <h3>🇮🇶 لعبة المحافظات</h3>
+            <p style="font-size: 13px; color: #cbd5e1;">اضغط على ورقة لتمريرها للاعب التالي، واجمع 4 أوراق متشابهة!</p>
+            <div id="gov-turn-info" style="color: #38bdf8; font-weight: bold; margin-bottom: 8px;"></div>
+            <div class="cards-grid" id="my-gov-cards"></div>
+            <button id="pass-card-btn" class="btn-primary" onclick="passSelectedCard()">➡️ تمرير الورقة المختارة</button>
+            <button id="claim-win-btn" class="btn-warn hidden" onclick="claimGovWin()">🏆 جمّعت 4 متشابهة! (فوز)</button>
+        </div>
+
+        <!-- 3. منطقة لعبة المافيا -->
+        <div id="mafia-game-area" class="hidden">
+            <div class="mafia-card">
+                <div style="font-size: 14px; color: #ddd6fe;">دورك السري في المدينة:</div>
+                <h2 id="mafia-role-title" style="font-size: 24px; margin: 8px 0; color: #fde047;">---</h2>
+                <div id="mafia-role-desc" style="font-size: 13px; color: #ede9fe;"></div>
+            </div>
+            <div id="mafia-phase-banner" class="question-box" style="color: #38bdf8;">🌙 حلّ الليل... انتظروا الأوامر</div>
+            <div id="mafia-action-box"></div>
+            <button id="mafia-next-phase-btn" class="btn-purple hidden" onclick="advanceMafiaPhase()">⏭️ الانتقال للمرحلة التالية</button>
+        </div>
+
+        <!-- 4. منطقة حجرة ورقة مقص -->
+        <div id="rps-game-area" class="hidden">
+            <h3>✊✋✌️ حجرة ورقة مقص</h3>
+            <p style="color: #cbd5e1;">اختر حركتك بسرعة قبل أن يكشف المدير النتائج!</p>
+            <div class="rps-grid">
+                <button class="rps-btn" id="rps-rock" onclick="pickRPS('حجرة ✊')">✊</button>
+                <button class="rps-btn" id="rps-paper" onclick="pickRPS('ورقة ✋')">✋</button>
+                <button class="rps-btn" id="rps-scissors" onclick="pickRPS('مقص ✌️')">✌️</button>
+            </div>
+            <div id="rps-status" style="color: #fbbf24; margin: 10px 0;"></div>
+            <button id="rps-reveal-btn" class="btn-accent hidden" onclick="revealRPS()">👀 كشف اختيارات الجميع</button>
+        </div>
+
+        <!-- 5. منطقة لعبة لودو (Ludo) -->
+        <div id="ludo-game-area" class="hidden">
+            <h3>🎲 لعبة لودو (Ludo)</h3>
+            <div id="ludo-turn-banner" style="font-size: 16px; font-weight: bold; color: #fde047; margin-bottom: 8px;"></div>
+            
+            <div class="ludo-board">
+                <div id="ludo-players-status"></div>
+                <div class="ludo-track" id="ludo-track-grid"></div>
+                <div class="dice-box" id="ludo-dice">🎲</div>
+                <button id="roll-dice-btn" class="btn-warn" onclick="rollLudoDice()">🎲 رمي الزار</button>
+                <div id="ludo-token-controls" style="margin-top: 8px;"></div>
+            </div>
+        </div>
+
+        <!-- منطقة التصويت (لألعاب الكلمات) -->
+        <div id="voting-area" class="hidden">
+            <h3>🗳️ منو المختلف / الجاسوس؟ صوت هسه!</h3>
+            <div id="vote-options"></div>
+            <div id="vote-status" style="margin-top: 10px; color: #38bdf8;"></div>
+        </div>
+
+        <!-- نتيجة الجولة -->
+        <div id="result-area" class="hidden">
+            <h2 id="result-title" style="color: #10b981;"></h2>
+            <p id="result-details" style="font-size: 17px; line-height: 1.6; white-space: pre-line;"></p>
+            <button id="reset-round-btn" class="btn-primary hidden" onclick="resetToLobby()">العودة لقائمة الألعاب</button>
+        </div>
+
+        <!-- قسم المراسلة الكتابية المباشرة -->
+        <div class="chat-section">
+            <div style="font-size: 13px; color: #94a3b8; margin-bottom: 4px;">💬 دردشة الغرفة المباشرة:</div>
+            <div class="chat-messages" id="chat-messages"></div>
+            <div class="chat-input-row">
+                <input type="text" id="chat-input" placeholder="اكتب رسالة للربع..." onkeypress="if(event.key==='Enter') sendChatMessage()">
+                <button onclick="sendChatMessage()">إرسال</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://ppjrmmpzojzrktpgbkvy.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_uLY4pAbZNQsuhdXdaVKg-Q_ulikTa46";
+
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    let channel;
+    let myId = 'user_' + Math.random().toString(36).substr(2, 6);
+    let myName = '';
+    let roomCode = '';
+    let isHost = false;
+    let players = {};
+
+    // متغيرات الصوت
+    let peer, myPeerId = '', localStream, isMuted = false;
+    const connectedPeers = {};
+
+    // ==========================================
+    // 🔊 نظام المؤثرات الصوتية والنطق باللهجة العراقية
+    // ==========================================
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playToneEffect(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+        if (type === 'hala') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(440, now);
+            osc.frequency.exponentialRampToValueAtTime(660, now + 0.25);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            osc.start(now); osc.stop(now + 0.3);
+        } else if (type === 'kafu' || type === 'clap') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(523.25, now);
+            osc.frequency.setValueAtTime(659.25, now + 0.1);
+            osc.frequency.setValueAtTime(783.99, now + 0.2);
+            gain.gain.setValueAtTime(0.25, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+            osc.start(now); osc.stop(now + 0.45);
+        } else if (type === 'yalla') {
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(880, now);
+            osc.frequency.setValueAtTime(880, now + 0.15);
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            osc.start(now); osc.stop(now + 0.3);
+        } else if (type === 'saduh') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(600, now);
+            osc.frequency.linearRampToValueAtTime(900, now + 0.15);
+            osc.frequency.linearRampToValueAtTime(500, now + 0.35);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+            osc.start(now); osc.stop(now + 0.4);
+        } else if (type === 'akh') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(350, now);
+            osc.frequency.linearRampToValueAtTime(140, now + 0.45);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+            osc.start(now); osc.stop(now + 0.5);
+        }
+    }
+
+    function speakIraqiPhrase(phrase) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const cleanText = phrase.replace(/[^؀-ۿ\s!؟]/g, '');
+            const utter = new SpeechSynthesisUtterance(cleanText);
+            utter.lang = 'ar-SA';
+            utter.rate = 1.05;
+            utter.pitch = 1.0;
+            window.speechSynthesis.speak(utter);
+        }
+    }
+
+    function triggerIraqiSFX(type, label) {
+        if (!channel) return;
+        channel.send({
+            type: 'broadcast',
+            event: 'iraqi_sfx',
+            payload: { sender: myName, type, label }
+        });
+    }
+
+    function handleIncomingSFX(payload) {
+        playToneEffect(payload.type);
+        speakIraqiPhrase(payload.label);
+        appendChatMessage(`🔊 [${payload.sender}]: ${payload.label}`, true);
+    }
+
+    // ==========================================
+    // 💬 نظام المراسلة الكتابية
+    // ==========================================
+    function sendChatMessage() {
+        const input = document.getElementById('chat-input');
+        const text = input.value.trim();
+        if (!text || !channel) return;
+        input.value = '';
+        channel.send({
+            type: 'broadcast',
+            event: 'chat_msg',
+            payload: { sender: myName, text }
+        });
+    }
+
+    function appendChatMessage(content, isSfx = false) {
+        const box = document.getElementById('chat-messages');
+        const div = document.createElement('div');
+        div.className = 'chat-msg' + (isSfx ? ' sfx-alert' : '');
+        div.innerText = content;
+        box.appendChild(div);
+        box.scrollTop = box.scrollHeight;
+    }
+
+    // بيانات ألعاب الكلمات الموسعة
+    const coffeePairs = [
+        { normal: "قهوة ☕", odd: "شاي 🍵", questions: ["شلون تحب تشربها؟", "شكد تخلي بيها شكر؟", "شوكت أكثر وقت تشربها؟", "تشربها بكوب كبير لو استكان/فنجان؟", "وين أطيب مكان يسويها؟"] },
+        { normal: "بيبسي 🥤", odd: "سفن أب 🍋", questions: ["شنو لونه؟", "تشربه ويه يا أكلة؟", "تحبه بارد كلش لو عادي؟", "تشربه بقوطية لو ببطل؟"] },
+        { normal: "دولمة 🍲", odd: "برياني 🍛", questions: ["شنو مكوناتها الأساسية؟", "تتاكل بالخاشوكة لو بالإيد؟", "يا يوم بالعطلة يسووها هواي؟", "تحبها حامضة لو عادية؟"] },
+        { normal: "كباب مشوي 🍢", odd: "شاورما / كص 🌯", questions: ["شنو تخلي وياها من مقبلات؟", "تتاكل بالصمون لو بالخبز؟", "أطيب شي بالعشاء لو بالغداء؟"] },
+        { normal: "برشلونة ⚽", odd: "ريال مدريد 👑", questions: ["شنو ألوان التيشيرت مالتهم؟", "منو أشهر لاعب مرّ عليهم؟", "ملعبهم وين صاير؟"] },
+        { normal: "آيفون 📱", odd: "سامسونج 📲", questions: ["شلون نظام التشغيل مالته؟", "شاحنه سريع لو بطيء؟", "كاميرته شلونها بالليل؟"] }
+    ];
+
+    const spyLocations = [
+        { word: "المستشفى 🏥", questions: ["ليش الناس تروح لهذا المكان؟", "شنو الملابس اللي يلبسوها الموظفين هناك؟", "يشتغلون بالليل لو بس الصبح؟", "الريحة هناك شلونها؟"] },
+        { word: "المطار ✈️", questions: ["شنو تاخذ وياك من تروح هناك؟", "شكد لازم توصل قبل الموعد؟", "المكان هادئ لو مزدحم؟", "تحتاج جواز سفر هناك؟"] },
+        { word: "الحلاق 💈", questions: ["كل شكد تروح لهذا المكان؟", "شنو الأدوات الموجودة هناك؟", "تكعد على كرسي لو توكف؟", "اكو مراية كدامك؟"] },
+        { word: "الملعب ⚽", questions: ["كم واحد يتواجد هناك عادة؟", "الناس تصيح وتتحمس هناك؟", "مفتوح لو مسقوف؟", "أرضيته شنو لونها؟"] },
+        { word: "المدرسة 🏫", questions: ["شوكت تبدي الدوامات بيها؟", "شنو تاخذ بجنطتك من تروح؟", "اكو جرس يدك هناك؟"] },
+        { word: "المطعم 🍽️", questions: ["شنو أول شي ينطوك من تكعد؟", "تدفع فلوس قبل لو بعد؟", "تروحله ويه العائلة لو الأصدقاء؟"] }
+    ];
+    let currentQuestions = [], currentOddPlayerId = '', votes = {};
+
+    // بيانات لعبة المحافظات (كل الـ 18 محافظة)
+    const iraqGovernorates = [
+        "بغداد 🏛️", "البصرة 🌴", "ذي قار 🏺", "أربيل 🏔️", "النجف 🕌", "كربلاء 🕌",
+        "الموصل 🌉", "بابل 🦁", "الأنبار 🏜️", "السليمانية 🌲", "كركوك 🛢️", "ديالى 🍊",
+        "واسط 🌾", "ميسان 🛶", "المثنى 🏜️", "القادسية 🌾", "صلاح الدين 🕌", "دهوك ⛰️"
+    ];
+    let myCards = [], selectedCardIndex = null, playerOrder = [];
+
+    // بيانات لعبة المافيا
+    let mafiaRoles = {}, alivePlayers = {}, mafiaPhase = 'night', nightKillTarget = null, nightSaveTarget = null, dayVotes = {};
+
+    // بيانات حجرة ورقة مقص
+    let rpsChoices = {};
+
+    // بيانات لعبة لودو (Ludo)
+    const ludoColors = ['red', 'blue', 'green', 'yellow'];
+    const safeCells = [1, 8, 15, 22];
+    let ludoState = null;
+
+    // 1. الصوت الجماعي
+    async function initVoice() {
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        } catch (e) {
+            alert("تنبيه: لم يتم السماح بالمايكروفون، ستلعب بالرسائل والمؤثرات الصوتية.");
+        }
+        return new Promise((resolve) => {
+            peer = new Peer(myId);
+            peer.on('open', (id) => { myPeerId = id; resolve(); });
+            peer.on('call', (call) => {
+                if (localStream) call.answer(localStream); else call.answer();
+                handleAudioStream(call);
+            });
+        });
+    }
+
+    function connectVoiceToAll() {
+        if (!localStream) return;
+        Object.keys(players).forEach(pid => {
+            if (pid !== myId && !connectedPeers[pid]) {
+                const call = peer.call(pid, localStream);
+                if (call) handleAudioStream(call);
+            }
+        });
+    }
+
+    function handleAudioStream(call) {
+        if (connectedPeers[call.peer]) return;
+        connectedPeers[call.peer] = call;
+        call.on('stream', (remoteStream) => {
+            const audio = document.createElement('audio');
+            audio.srcObject = remoteStream;
+            audio.autoplay = true;
+            document.getElementById('audio-elements').appendChild(audio);
+        });
+    }
+
+    function toggleMic() {
+        if (!localStream) return;
+        isMuted = !isMuted;
+        localStream.getAudioTracks().forEach(t => t.enabled = !isMuted);
+        const btn = document.getElementById('mic-btn');
+        btn.innerText = isMuted ? "🔇 المايك مكتوم (اضغط للفتح)" : "🎤 المايك مفتوح للكل";
+        btn.classList.toggle('mic-on', !isMuted);
+    }
+
+    // 2. الغرفة والاتصال
+    async function createRoom() {
+        myName = document.getElementById('player-name').value.trim();
+        if (!myName) return alert("اكتب اسمك أولاً!");
+        isHost = true;
+        roomCode = Math.floor(1000 + Math.random() * 9000).toString();
+        await enterRoom();
+    }
+
+    async function joinRoom() {
+        myName = document.getElementById('player-name').value.trim();
+        roomCode = document.getElementById('room-code-input').value.trim();
+        if (!myName || !roomCode) return alert("اكتب اسمك وكود الغرفة!");
+        isHost = false;
+        await enterRoom();
+    }
+
+    async function enterRoom() {
+        await initVoice();
+        document.getElementById('screen-login').classList.add('hidden');
+        document.getElementById('screen-room').classList.remove('hidden');
+        document.getElementById('display-room-code').innerText = roomCode;
+
+        if (isHost) {
+            document.getElementById('host-badge').classList.remove('hidden');
+            document.getElementById('host-controls').classList.remove('hidden');
+        }
+
+        channel = supabaseClient.channel('room_' + roomCode, {
+            config: {
+                presence: { key: myId },
+                broadcast: { self: true }
+            }
+        });
+
+        channel.on('presence', { event: 'sync' }, () => {
+            const state = channel.presenceState();
+            players = {};
+            for (const id in state) {
+                players[id] = state[id][0] || state[id];
+            }
+            updatePlayersUI();
+            connectVoiceToAll();
+        });
+
+        // أحداث الشات والمؤثرات العراقية
+        channel.on('broadcast', { event: 'chat_msg' }, ({ payload }) => {
+            appendChatMessage(`${payload.sender}: ${payload.text}`, false);
+        });
+        channel.on('broadcast', { event: 'iraqi_sfx' }, ({ payload }) => {
+            handleIncomingSFX(payload);
+        });
+
+        // أحداث ألعاب الكلمات
+        channel.on('broadcast', { event: 'word_game_start' }, ({ payload }) => renderWordGame(payload));
+        channel.on('broadcast', { event: 'new_question' }, ({ payload }) => {
+            document.getElementById('suggested-question').innerText = "💡 " + payload.question;
+        });
+        channel.on('broadcast', { event: 'start_voting' }, () => showVotingUI());
+        channel.on('broadcast', { event: 'cast_vote' }, ({ payload }) => {
+            if (isHost) { votes[payload.voterId] = payload.targetId; checkVotesComplete(); }
+        });
+
+        // أحداث لعبة المحافظات
+        channel.on('broadcast', { event: 'gov_game_start' }, ({ payload }) => startGovGameUI(payload));
+        channel.on('broadcast', { event: 'pass_gov_card' }, ({ payload }) => {
+            if (payload.toId === myId) { myCards.push(payload.card); renderMyGovCards(); }
+        });
+
+        // أحداث لعبة المافيا
+        channel.on('broadcast', { event: 'mafia_update' }, ({ payload }) => renderMafiaState(payload));
+        channel.on('broadcast', { event: 'mafia_action' }, ({ payload }) => {
+            if (isHost) handleMafiaActionHost(payload);
+        });
+
+        // أحداث حجرة ورقة مقص
+        channel.on('broadcast', { event: 'rps_start' }, () => startRPSUI());
+        channel.on('broadcast', { event: 'rps_pick' }, ({ payload }) => {
+            if (isHost) {
+                rpsChoices[payload.pid] = payload.choice;
+                document.getElementById('rps-status').innerText = `اختار (${Object.keys(rpsChoices).length} من ${Object.keys(players).length}) لاعبين...`;
+            }
+        });
+
+        // أحداث لعبة لودو
+        channel.on('broadcast', { event: 'ludo_sync' }, ({ payload }) => {
+            ludoState = payload;
+            renderLudoBoard();
+        });
+
+        // النتائج والعودة
+        channel.on('broadcast', { event: 'show_result' }, ({ payload }) => showResultUI(payload));
+        channel.on('broadcast', { event: 'back_lobby' }, () => resetUI());
+
+        await channel.subscribe(async (status) => {
+            if (status === 'SUBSCRIBED') {
+                await channel.track({ name: myName, peerId: myPeerId });
+                appendChatMessage(`✅ انضممت إلى الغرفة (${roomCode}) بنجاح!`, true);
+            }
+        });
+    }
+
+    function updatePlayersUI() {
+        const container = document.getElementById('players-container');
+        container.innerHTML = '';
+        const ids = Object.keys(players);
+        document.getElementById('player-count').innerText = ids.length;
+        ids.forEach(id => {
+            const div = document.createElement('div');
+            const isDead = (alivePlayers[id] === false);
+            div.className = 'player-badge' + (isDead ? ' dead' : '');
+            div.innerHTML = `${isDead ? '💀' : '🎙️'} ${players[id].name} ${id === myId ? '(أنت)' : ''}`;
+            container.appendChild(div);
+        });
+    }
+
+    // 3. تشغيل الألعاب
+    function startGame() {
+        const playerIds = Object.keys(players);
+        if (playerIds.length < 2) return alert("تحتاج لاعبين اثنين على الأقل للبدء!");
+
+        const mode = document.getElementById('game-mode').value;
+        alivePlayers = {};
+        playerIds.forEach(id => alivePlayers[id] = true);
+
+        if (mode === 'ludo') {
+            const ludoPlayers = playerIds.slice(0, 4);
+            const tokens = {};
+            const colors = {};
+            ludoPlayers.forEach((pid, i) => {
+                colors[pid] = ludoColors[i];
+                tokens[pid] = [0, 0];
+            });
+            ludoState = {
+                order: ludoPlayers,
+                turnIndex: 0,
+                dice: null,
+                rolled: false,
+                tokens: tokens,
+                colors: colors,
+                lastMsg: `دور ${players[ludoPlayers[0]].name} لرمي الزار!`
+            };
+            channel.send({ type: 'broadcast', event: 'ludo_sync', payload: ludoState });
+        } else if (mode === 'mafia') {
+            if (playerIds.length < 3) return alert("لعبة المافيا تحتاج 3 لاعبين على الأقل!");
+            const shuffled = [...playerIds].sort(() => Math.random() - 0.5);
+            mafiaRoles = {};
+            mafiaRoles[shuffled[0]] = 'mafia';
+            mafiaRoles[shuffled[1]] = 'doctor';
+            if (shuffled.length >= 4) mafiaRoles[shuffled[2]] = 'detective';
+            for (let i = (shuffled.length >= 4 ? 3 : 2); i < shuffled.length; i++) {
+                mafiaRoles[shuffled[i]] = 'citizen';
+            }
+            mafiaPhase = 'night';
+            nightKillTarget = null;
+            nightSaveTarget = null;
+            dayVotes = {};
+            broadcastMafiaState("🌙 حلّ الليل! المافيا والطبيب والمحقق ينفذون مهامهم بالسر...");
+        } else if (mode === 'governorates') {
+            const chosenGovs = [...iraqGovernorates].sort(() => Math.random() - 0.5).slice(0, playerIds.length);
+            let deck = [];
+            chosenGovs.forEach(g => { deck.push(g, g, g, g); });
+            deck.sort(() => Math.random() - 0.5);
+
+            const hands = {};
+            playerIds.forEach((pid, idx) => { hands[pid] = deck.slice(idx * 4, (idx + 1) * 4); });
+
+            channel.send({ type: 'broadcast', event: 'gov_game_start', payload: { hands, order: playerIds } });
+        } else if (mode === 'rps') {
+            rpsChoices = {};
+            channel.send({ type: 'broadcast', event: 'rps_start' });
+        } else {
+            const oddPlayerId = playerIds[Math.floor(Math.random() * playerIds.length)];
+            currentOddPlayerId = oddPlayerId;
+            votes = {};
+            let normalWord = '', oddWord = '', questions = [];
+
+            if (mode === 'coffee') {
+                const pair = coffeePairs[Math.floor(Math.random() * coffeePairs.length)];
+                normalWord = pair.normal; oddWord = pair.odd; questions = pair.questions;
+            } else {
+                const loc = spyLocations[Math.floor(Math.random() * spyLocations.length)];
+                normalWord = loc.word; oddWord = "أنت الجاسوس! 🕵️ (حاول تعرف المكان)"; questions = loc.questions;
+            }
+            currentQuestions = questions;
+            channel.send({ type: 'broadcast', event: 'word_game_start', payload: { oddPlayerId, normalWord, oddWord, firstQuestion: questions[0] } });
+        }
+    }
+
+    // --- 🎲 منطق لعبة لودو (Ludo) ---
+    function renderLudoBoard() {
+        hideAllAreas();
+        document.getElementById('ludo-game-area').classList.remove('hidden');
+
+        const currentPid = ludoState.order[ludoState.turnIndex];
+        const isMyTurn = (currentPid === myId);
+        document.getElementById('ludo-turn-banner').innerText = ludoState.lastMsg;
+        document.getElementById('ludo-dice').innerText = ludoState.dice ? `🎲 ${ludoState.dice}` : '🎲';
+
+        const statusDiv = document.getElementById('ludo-players-status');
+        statusDiv.innerHTML = '';
+        ludoState.order.forEach(pid => {
+            const col = ludoState.colors[pid];
+            const t = ludoState.tokens[pid];
+            const homeCount = t.filter(pos => pos === 0).length;
+            const winCount = t.filter(pos => pos === 28).length;
+            const row = document.createElement('div');
+            row.className = 'ludo-player-card';
+            row.innerHTML = `
+                <span><span class="token t-${col}"></span> ${players[pid]?.name || 'لاعب'}</span>
+                <span>🏠 بالبيت: ${homeCount} | 🏆 وصل: ${winCount}/2</span>
+            `;
+            statusDiv.appendChild(row);
+        });
+
+        const trackGrid = document.getElementById('ludo-track-grid');
+        trackGrid.innerHTML = '';
+        for (let step = 1; step <= 28; step++) {
+            const cell = document.createElement('div');
+            cell.className = 'ludo-cell' + (safeCells.includes(step) ? ' safe' : '') + (step === 28 ? ' finish' : '');
+            cell.innerText = step === 28 ? '🏆' : (safeCells.includes(step) ? '⭐' : step);
+
+            ludoState.order.forEach(pid => {
+                const col = ludoState.colors[pid];
+                ludoState.tokens[pid].forEach((pos, idx) => {
+                    if (pos === step) {
+                        const tok = document.createElement('span');
+                        tok.className = `token t-${col}`;
+                        tok.title = `${players[pid]?.name} (حجر ${idx + 1})`;
+                        cell.appendChild(tok);
+                    }
+                });
+            });
+            trackGrid.appendChild(cell);
+        }
+
+        const rollBtn = document.getElementById('roll-dice-btn');
+        const tokenCtrl = document.getElementById('ludo-token-controls');
+        tokenCtrl.innerHTML = '';
+
+        if (isMyTurn) {
+            rollBtn.classList.remove('hidden');
+            rollBtn.disabled = ludoState.rolled;
+            rollBtn.style.opacity = ludoState.rolled ? '0.5' : '1';
+
+            if (ludoState.rolled) {
+                const myTokens = ludoState.tokens[myId];
+                let canMoveAny = false;
+
+                myTokens.forEach((pos, idx) => {
+                    const canMove = (pos === 0 && ludoState.dice === 6) || (pos > 0 && pos + ludoState.dice <= 28);
+                    if (canMove) {
+                        canMoveAny = true;
+                        const btn = document.createElement('button');
+                        btn.className = 'btn-primary';
+                        btn.style.width = '45%';
+                        btn.innerText = pos === 0 ? `🚀 إخراج الحجر ${idx + 1}` : `➡️ تحريك الحجر ${idx + 1} (خانة ${pos})`;
+                        btn.onclick = () => moveLudoToken(idx);
+                        tokenCtrl.appendChild(btn);
+                    }
+                });
+
+                if (!canMoveAny) {
+                    const passBtn = document.createElement('button');
+                    passBtn.className = 'btn-danger';
+                    passBtn.innerText = "لا توجد حركة متاحة — تمرير الدور";
+                    passBtn.onclick = () => nextLudoTurn(false);
+                    tokenCtrl.appendChild(passBtn);
+                }
+            }
+        } else {
+            rollBtn.classList.add('hidden');
+        }
+    }
+
+    function rollLudoDice() {
+        const val = Math.floor(Math.random() * 6) + 1;
+        ludoState.dice = val;
+        ludoState.rolled = true;
+        ludoState.lastMsg = `${myName} رمى الزار وحصل على (${val})!`;
+        channel.send({ type: 'broadcast', event: 'ludo_sync', payload: ludoState });
+    }
+
+    function moveLudoToken(tokenIdx) {
+        const dice = ludoState.dice;
+        let currentPos = ludoState.tokens[myId][tokenIdx];
+        let newPos = (currentPos === 0) ? 1 : currentPos + dice;
+        ludoState.tokens[myId][tokenIdx] = newPos;
+
+        let extraMsg = "";
+        if (newPos < 28 && !safeCells.includes(newPos)) {
+            ludoState.order.forEach(otherPid => {
+                if (otherPid !== myId) {
+                    ludoState.tokens[otherPid] = ludoState.tokens[otherPid].map(otherPos => {
+                        if (otherPos === newPos) {
+                            extraMsg = ` 💥 وأكل حجر ${players[otherPid]?.name} وأرجعه للبيت!`;
+                            return 0;
+                        }
+                        return otherPos;
+                    });
+                }
+            });
+        }
+
+        if (ludoState.tokens[myId].every(p => p === 28)) {
+            channel.send({
+                type: 'broadcast',
+                event: 'show_result',
+                payload: { title: `🎲🏆 فاز ${myName} باللودو!`, details: `أوصل جميع أحجاره إلى خط النهاية بنجاح!` }
+            });
+            return;
+        }
+
+        const playAgain = (dice === 6);
+        nextLudoTurn(playAgain, extraMsg);
+    }
+
+    function nextLudoTurn(playAgain, extraMsg = "") {
+        if (!playAgain) {
+            ludoState.turnIndex = (ludoState.turnIndex + 1) % ludoState.order.length;
+        }
+        ludoState.rolled = false;
+        const nextPid = ludoState.order[ludoState.turnIndex];
+        ludoState.lastMsg = playAgain
+            ? `🔥 ${myName} حصل على 6 ويلعب مرة أخرى!${extraMsg}`
+            : `دور ${players[nextPid]?.name} لرمي الزار!${extraMsg}`;
+
+        channel.send({ type: 'broadcast', event: 'ludo_sync', payload: ludoState });
+    }
+
+    // --- 🔪 منطق لعبة المافيا ---
+    function broadcastMafiaState(bannerText) {
+        channel.send({
+            type: 'broadcast',
+            event: 'mafia_update',
+            payload: { roles: mafiaRoles, alive: alivePlayers, phase: mafiaPhase, banner: bannerText }
+        });
+    }
+
+    function renderMafiaState(data) {
+        hideAllAreas();
+        document.getElementById('mafia-game-area').classList.remove('hidden');
+        mafiaRoles = data.roles;
+        alivePlayers = data.alive;
+        mafiaPhase = data.phase;
+        updatePlayersUI();
+
+        const myRole = mafiaRoles[myId];
+        const roleInfo = {
+            mafia: { title: "🔪 أنت المافيا (القاتل)", desc: "بالليل اختر ضحية، وبالنهار دافع عن نفسك ولا تخليهم يكشفوك!" },
+            doctor: { title: "💉 أنت الطبيب", desc: "بالليل اختر شخص واحد تحميه من القتل (تگدر تحمي نفسك)." },
+            detective: { title: "🔍 أنت المحقق", desc: "بالليل اختر شخص واحد تكشف هويته هل هو مافيا لو بريء." },
+            citizen: { title: "🧑 أنت مواطن صالح", desc: "ناقش بالمايك بالنهار وصوّت لطرد المافيا!" }
+        }[myRole];
+
+        document.getElementById('mafia-role-title').innerText = roleInfo.title;
+        document.getElementById('mafia-role-desc').innerText = roleInfo.desc;
+        document.getElementById('mafia-phase-banner').innerText = data.banner;
+
+        const actionBox = document.getElementById('mafia-action-box');
+        actionBox.innerHTML = '';
+
+        if (!alivePlayers[myId]) {
+            actionBox.innerHTML = `<p style="color:#ef4444;">💀 تم إقصاؤك من الجولة! استمع للنقاش بصمت.</p>`;
+        } else if (mafiaPhase === 'night') {
+            if (myRole === 'mafia' || myRole === 'doctor' || myRole === 'detective') {
+                const label = myRole === 'mafia' ? "اختر ضحية لقتلها:" : (myRole === 'doctor' ? "اختر شخصاً لحمايته:" : "اختر شخصاً لكشف هويته:");
+                actionBox.innerHTML = `<p>${label}</p>`;
+                Object.keys(alivePlayers).forEach(pid => {
+                    if (alivePlayers[pid] && (myRole === 'doctor' || pid !== myId)) {
+                        const btn = document.createElement('button');
+                        btn.className = 'vote-btn';
+                        btn.innerText = players[pid].name;
+                        btn.onclick = () => {
+                            if (myRole === 'detective') {
+                                const isBad = (mafiaRoles[pid] === 'mafia');
+                                actionBox.innerHTML = `<p style="color:#fde047;">نتيجة التحقيق: ${players[pid].name} هو ${isBad ? '🔪 المافيا!' : '😇 بريء!'}</p>`;
+                            } else {
+                                actionBox.innerHTML = `<p style="color:#10b981;">✅ تم تسجيل اختيارك السري!</p>`;
+                                channel.send({ type: 'broadcast', event: 'mafia_action', payload: { type: myRole, target: pid } });
+                            }
+                        };
+                        actionBox.appendChild(btn);
+                    }
+                });
+            } else {
+                actionBox.innerHTML = `<p style="color:#94a3b8;">أنت نائم الآن... انتظر الصباح.</p>`;
+            }
+        } else if (mafiaPhase === 'day') {
+            actionBox.innerHTML = `<p>🗳️ صوّت لطرد المشتبه به:</p>`;
+            Object.keys(alivePlayers).forEach(pid => {
+                if (alivePlayers[pid] && pid !== myId) {
+                    const btn = document.createElement('button');
+                    btn.className = 'vote-btn';
+                    btn.innerText = `طرد: ${players[pid].name}`;
+                    btn.onclick = () => {
+                        actionBox.innerHTML = `<p style="color:#10b981;">✅ تم تسجيل صوتك!</p>`;
+                        channel.send({ type: 'broadcast', event: 'mafia_action', payload: { type: 'day_vote', voter: myId, target: pid } });
+                    };
+                    actionBox.appendChild(btn);
+                }
+            });
+        }
+
+        if (isHost) {
+            const nextBtn = document.getElementById('mafia-next-phase-btn');
+            nextBtn.classList.remove('hidden');
+            nextBtn.innerText = (mafiaPhase === 'night') ? "☀️ إنهاء الليل وإعلان الصباح" : "⚖️ فرز الأصوات والانتقال لليل";
+        }
+    }
+
+    function handleMafiaActionHost(payload) {
+        if (payload.type === 'mafia') nightKillTarget = payload.target;
+        if (payload.type === 'doctor') nightSaveTarget = payload.target;
+        if (payload.type === 'day_vote') dayVotes[payload.voter] = payload.target;
+    }
+
+    function advanceMafiaPhase() {
+        if (mafiaPhase === 'night') {
+            let msg = "☀️ أشرقت الشمس! ";
+            if (nightKillTarget && nightKillTarget !== nightSaveTarget) {
+                alivePlayers[nightKillTarget] = false;
+                msg += `للأسف، المافيا قتل (${players[nightKillTarget]?.name}) الليلة!`;
+            } else if (nightKillTarget && nightKillTarget === nightSaveTarget) {
+                msg += `الطبيب أنقذ الضحية ببراعة! لم يمت أحد الليلة.`;
+            } else {
+                msg += `مرت الليلة بسلام ولم يمت أحد.`;
+            }
+            if (checkMafiaWin()) return;
+            mafiaPhase = 'day';
+            dayVotes = {};
+            broadcastMafiaState(msg);
+        } else {
+            const counts = {};
+            Object.values(dayVotes).forEach(tid => counts[tid] = (counts[tid] || 0) + 1);
+            let maxV = 0, outId = null;
+            for (const tid in counts) { if (counts[tid] > maxV) { maxV = counts[tid]; outId = tid; } }
+
+            let msg = "🌙 حلّ الليل من جديد! ";
+            if (outId) {
+                alivePlayers[outId] = false;
+                msg = `⚖️ قررت المدينة طرد (${players[outId]?.name})! ` + msg;
+            }
+            if (checkMafiaWin()) return;
+            mafiaPhase = 'night';
+            nightKillTarget = null;
+            nightSaveTarget = null;
+            broadcastMafiaState(msg);
+        }
+    }
+
+    function checkMafiaWin() {
+        const aliveIds = Object.keys(alivePlayers).filter(id => alivePlayers[id]);
+        const mafiaAlive = aliveIds.filter(id => mafiaRoles[id] === 'mafia').length;
+        const citizensAlive = aliveIds.length - mafiaAlive;
+
+        if (mafiaAlive === 0) {
+            const mafiaId = Object.keys(mafiaRoles).find(id => mafiaRoles[id] === 'mafia');
+            channel.send({ type: 'broadcast', event: 'show_result', payload: { title: "🎉 فازت المدينة!", details: `تم القضاء على المافيا (${players[mafiaId]?.name}) بنجاح!` } });
+            return true;
+        }
+        if (mafiaAlive >= citizensAlive) {
+            const mafiaId = Object.keys(mafiaRoles).find(id => mafiaRoles[id] === 'mafia');
+            channel.send({ type: 'broadcast', event: 'show_result', payload: { title: "🔪 فازت المافيا!", details: `سيطر المافيا (${players[mafiaId]?.name}) على المدينة بالكامل!` } });
+            return true;
+        }
+        return false;
+    }
+
+    // --- ✊✋✌️ منطق حجرة ورقة مقص ---
+    function startRPSUI() {
+        hideAllAreas();
+        document.getElementById('rps-game-area').classList.remove('hidden');
+        document.getElementById('rps-status').innerText = "بانتظار اختيارات اللاعبين...";
+        ['rps-rock', 'rps-paper', 'rps-scissors'].forEach(id => document.getElementById(id).classList.remove('chosen'));
+        if (isHost) document.getElementById('rps-reveal-btn').classList.remove('hidden');
+    }
+
+    function pickRPS(choice) {
+        ['rps-rock', 'rps-paper', 'rps-scissors'].forEach(id => document.getElementById(id).classList.remove('chosen'));
+        if (choice.includes('حجرة')) document.getElementById('rps-rock').classList.add('chosen');
+        if (choice.includes('ورقة')) document.getElementById('rps-paper').classList.add('chosen');
+        if (choice.includes('مقص')) document.getElementById('rps-scissors').classList.add('chosen');
+
+        document.getElementById('rps-status').innerText = `اخترت: ${choice} — بانتظار الكشف...`;
+        channel.send({ type: 'broadcast', event: 'rps_pick', payload: { pid: myId, choice } });
+    }
+
+    function revealRPS() {
+        let summary = "";
+        Object.keys(players).forEach(pid => {
+            const ch = rpsChoices[pid] || "لم يختر ❌";
+            summary += `• ${players[pid].name}: ${ch}
+`;
+        });
+        channel.send({
+            type: 'broadcast',
+            event: 'show_result',
+            payload: { title: "✊✋✌️ نتائج الجولة", details: summary }
+        });
+    }
+
+    // --- 🇮🇶 منطق لعبة المحافظات ---
+    function startGovGameUI(data) {
+        hideAllAreas();
+        document.getElementById('gov-game-area').classList.remove('hidden');
+        myCards = data.hands[myId] || [];
+        playerOrder = data.order;
+        selectedCardIndex = null;
+
+        const myIdx = playerOrder.indexOf(myId);
+        const nextId = playerOrder[(myIdx + 1) % playerOrder.length];
+        document.getElementById('gov-turn-info').innerText = `أوراقك تروح إلى: ${players[nextId]?.name || "التالي"} ➡️`;
+        renderMyGovCards();
+    }
+
+    function renderMyGovCards() {
+        const grid = document.getElementById('my-gov-cards');
+        grid.innerHTML = '';
+        myCards.forEach((card, index) => {
+            const div = document.createElement('div');
+            div.className = 'gov-card' + (selectedCardIndex === index ? ' selected' : '');
+            div.innerText = card;
+            div.onclick = () => { selectedCardIndex = index; renderMyGovCards(); };
+            grid.appendChild(div);
+        });
+
+        const winBtn = document.getElementById('claim-win-btn');
+        if (myCards.length === 4 && myCards.every(c => c === myCards[0])) winBtn.classList.remove('hidden');
+        else winBtn.classList.add('hidden');
+    }
+
+    function passSelectedCard() {
+        if (selectedCardIndex === null) return alert("اضغط على ورقة من أوراقك أولاً حتى تختارها للتمرير!");
+        if (myCards.length <= 3) return alert("انتظر تجيك ورقة من اللاعب اللي قبلك حتى ما تقل أوراقك عن 4!");
+
+        const cardToPass = myCards.splice(selectedCardIndex, 1)[0];
+        selectedCardIndex = null;
+        renderMyGovCards();
+
+        const myIdx = playerOrder.indexOf(myId);
+        const nextId = playerOrder[(myIdx + 1) % playerOrder.length];
+        channel.send({ type: 'broadcast', event: 'pass_gov_card', payload: { fromId: myId, toId: nextId, card: cardToPass } });
+    }
+
+    function claimGovWin() {
+        channel.send({
+            type: 'broadcast',
+            event: 'show_result',
+            payload: { title: `🏆 فاز اللاعب ${myName}!`, details: `جمع 4 أوراق متشابهة لمحافظة (${myCards[0]}) بنجاح!` }
+        });
+    }
+
+    // --- ☕ منطق ألعاب الكلمات والتصويت ---
+    function renderWordGame(data) {
+        hideAllAreas();
+        document.getElementById('word-game-area').classList.remove('hidden');
+        const amIOdd = (myId === data.oddPlayerId);
+        document.getElementById('my-secret-word').innerText = amIOdd ? data.oddWord : data.normalWord;
+        document.getElementById('my-role-hint').innerText = amIOdd ? "حاول تجاوب بذكاء وما تكشف نفسك!" : "اسأل البقية بالمايك واكتشف منو المختلف!";
+        document.getElementById('suggested-question').innerText = "💡 " + data.firstQuestion;
+
+        if (isHost) {
+            document.getElementById('next-q-btn').classList.remove('hidden');
+            document.getElementById('start-vote-btn').classList.remove('hidden');
+        }
+    }
+
+    function nextQuestion() {
+        const q = currentQuestions[Math.floor(Math.random() * currentQuestions.length)];
+        channel.send({ type: 'broadcast', event: 'new_question', payload: { question: q } });
+    }
+
+    function triggerVoting() { channel.send({ type: 'broadcast', event: 'start_voting' }); }
+
+    function showVotingUI() {
+        hideAllAreas();
+        document.getElementById('voting-area').classList.remove('hidden');
+        document.getElementById('vote-status').innerText = '';
+        const optionsDiv = document.getElementById('vote-options');
+        optionsDiv.innerHTML = '';
+
+        Object.keys(players).forEach(pid => {
+            if (pid !== myId) {
+                const btn = document.createElement('button');
+                btn.className = 'vote-btn';
+                btn.innerText = `تصويت ضد: ${players[pid].name}`;
+                btn.onclick = () => submitVote(pid);
+                optionsDiv.appendChild(btn);
+            }
+        });
+    }
+
+    function submitVote(targetId) {
+        document.getElementById('vote-options').innerHTML = '';
+        document.getElementById('vote-status').innerText = "✅ تم تسجيل صوتك! بانتظار البقية...";
+        channel.send({ type: 'broadcast', event: 'cast_vote', payload: { voterId: myId, targetId } });
+    }
+
+    function checkVotesComplete() {
+        if (Object.keys(votes).length >= Object.keys(players).length) {
+            const counts = {};
+            Object.values(votes).forEach(tid => counts[tid] = (counts[tid] || 0) + 1);
+            let maxVotes = 0, votedOutId = '';
+            for (const tid in counts) { if (counts[tid] > maxVotes) { maxVotes = counts[tid]; votedOutId = tid; } }
+            const caught = (votedOutId === currentOddPlayerId);
+            const oddName = players[currentOddPlayerId]?.name || "مجهول";
+            const votedName = players[votedOutId]?.name || "لا أحد";
+
+            channel.send({
+                type: 'broadcast',
+                event: 'show_result',
+                payload: {
+                    title: caught ? "🎉 فازت المجموعة!" : "😈 فاز المختلف!",
+                    details: caught ? `كشفتوا المختلف (${oddName}) بنجاح!` : `صوتتوا ضد (${votedName})، بينما المختلف الحقيقي كان (${oddName})!`
+                }
+            });
+        }
+    }
+
+    function showResultUI(res) {
+        hideAllAreas();
+        document.getElementById('result-area').classList.remove('hidden');
+        document.getElementById('result-title').innerText = res.title;
+        document.getElementById('result-details').innerText = res.details;
+        if (isHost) document.getElementById('reset-round-btn').classList.remove('hidden');
+    }
+
+    function hideAllAreas() {
+        ['host-controls', 'word-game-area', 'gov-game-area', 'mafia-game-area', 'rps-game-area', 'ludo-game-area', 'voting-area', 'result-area'].forEach(id => {
+            document.getElementById(id).classList.add('hidden');
+        });
+    }
+
+    function resetToLobby() { channel.send({ type: 'broadcast', event: 'back_lobby' }); }
+
+    function resetUI() {
+        alivePlayers = {};
+        updatePlayersUI();
+        hideAllAreas();
+        if (isHost) document.getElementById('host-controls').classList.remove('hidden');
+    }
+</script>
+
+</body>
+</html>
